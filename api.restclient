@@ -1,0 +1,49 @@
+# -*- restclient -*-
+
+:base_url = https://api.easee.cloud
+
+:username := (getenv "EASEE_USERNAME")
+:password := (getenv "EASEE_PASSWORD")
+
+
+:token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjMwMDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmljbGFzICBSb3NlbmdyZW4iLCJyb2xlIjoiVXNlciIsIm5iZiI6MTY3NDE3ODQ3MSwiZXhwIjoxNjc0MjY0ODcxLCJpYXQiOjE2NzQxNzg0NzF9.W0TIy0vWp6o9xPCEtvZw-ckmhwnaYwO3_u8wkv-Uamw
+
+
+# Login
+POST :base_url/api/accounts/login
+Authorization: Bearer :token
+Accept: application/json
+Content-type: application/json
+
+{
+     "userName": ":username",
+     "password": ":password"
+}
+
+
+
+
+# Get Profile
+GET :base_url/api/accounts/profile
+Authorization: Bearer :token
+Accept: application/json
+
+
+# Get Sites
+# 576136 - Brf Lindblomman 212
+# 575766 - Brf Lindblomman 213
+# 
+GET :base_url/api/sites
+Authorization: Bearer :token
+Accept: application/json
+
+
+
+# Get Site
+# 576136 - Brf Lindblomman 212
+# 575766 - Brf Lindblomman 213
+# 
+GET :base_url/api/sites/575766
+Authorization: Bearer :token
+Accept: application/json
+
