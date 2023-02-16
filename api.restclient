@@ -5,8 +5,9 @@
 :username := (getenv "EASEE_USERNAME")
 :password := (getenv "EASEE_PASSWORD")
 
+:token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjMwMDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmljbGFzICBSb3NlbmdyZW4iLCJuYmYiOjE2NzY1MDY4OTMsImV4cCI6MTY3NjU5MzI5MywiaWF0IjoxNjc2NTA2ODkzLCJyb2xlIjoiVXNlciJ9.vr1TjX-pWHQDoAo4jzOYqGbCutMy7c-3I8foQYJm0Gw
 
-:token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjMwMDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmljbGFzICBSb3NlbmdyZW4iLCJyb2xlIjoiVXNlciIsIm5iZiI6MTY3NDE3ODQ3MSwiZXhwIjoxNjc0MjY0ODcxLCJpYXQiOjE2NzQxNzg0NzF9.W0TIy0vWp6o9xPCEtvZw-ckmhwnaYwO3_u8wkv-Uamw
+:refreshToken = IzQAEcDUX960ZNkjdsYw1Ot7RTOTGIM4XgSbyEn+uLM=
 
 
 # Login
@@ -20,6 +21,17 @@ Content-type: application/json
      "password": ":password"
 }
 
+
+# Refresh token
+POST :base_url/api/accounts/refresh_token
+Authorization: Bearer :token
+Accept: application/json
+Content-type: application/json
+
+{
+	"accessToken": ":token",
+	"refreshToken": ":refreshToken"
+}
 
 
 
@@ -44,6 +56,33 @@ Accept: application/json
 # 575766 - Brf Lindblomman 213
 # 
 GET :base_url/api/sites/575766
+Authorization: Bearer :token
+Accept: application/json
+
+
+# Get Charger sessions
+# Parkering 14: EC3VJ7GU
+GET :base_url/api/sessions/charger/EC3VJ7GU/sessions/2023-01-01/2023-01-21
+Authorization: Bearer :token
+Accept: application/json
+
+
+# Get Charger sessions
+# Parkering 14: EC3VJ7GU
+GET :base_url/api/sessions/charger/EC3VJ7GU/hourly
+Authorization: Bearer :token
+Accept: application/json
+
+
+
+
+
+# Get Site Consumption report
+#
+# 576136 - Brf Lindblomman 212
+# 575766 - Brf Lindblomman 213
+#
+GET :base_url/api/sessions/export/575766/3/2023-01-01/2023-01-21
 Authorization: Bearer :token
 Accept: application/json
 
