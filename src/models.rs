@@ -2,32 +2,49 @@ use serde::{Deserialize, Serialize};
 
 pub type DateTime = chrono::DateTime<chrono::Utc>;
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
+pub struct SiteId(pub i64);
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Site {
-    pub id: i64,
+    pub id: SiteId,
     pub site_key: String,
     pub name: String,
-    pub level_of_access: u8, // 1 - 3
+    pub level_of_access: Option<u8>, // 1 - 3
     pub address: Address,
-    pub contact_info: ContactInfo,
+    pub contact_info: Option<ContactInfo>,
 
     #[serde(rename = "costPerKWh")]
-    pub cost_per_kwh: f64,
-    pub cost_per_kwh_exclude_vat: f64,
+    pub cost_per_kwh: Option<f64>,
+    pub cost_per_kwh_exclude_vat: Option<f64>,
     pub currency_id: Option<String>,
     pub site_type: u32, // 1, 100, 400, 1000
     pub rated_current: f64,
-    pub vat: f64,
-    pub partner_id: u32,
+    pub vat: Option<f64>,
+    pub partner_id: Option<u32>,
     pub installer_id: Option<u64>,
-    pub use_dynamic_master: bool,
+    pub use_dynamic_master: Option<bool>,
+
+    #[serde(default = "Vec::new")]
     pub circuits: Vec<Circuit>,
+    #[serde(default = "Vec::new")]
     pub equalizers: Vec<Equalizer>,
-    pub created_on: String,
-    pub updated_on: String,
+    pub created_on: DateTime,
+    pub updated_on: DateTime,
     pub user_role: u8, // 1, 2, 3, 20
+    #[serde(default = "Vec::new")]
     pub allowed_site_actions: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SiteSub {
+    pub id: SiteId,
+    pub site_key: String,
+    pub name: String,
+    pub level_of_access: Option<u8>, // 1 - 3
+    pub address: Address,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -37,7 +54,7 @@ pub struct Address {
     pub building_number: Option<String>,
     pub zip: Option<String>,
     pub area: Option<String>,
-    pub country: Country,
+    pub country: Option<Country>,
     pub latitude: Option<f64>,
     pub longitude: Option<f64>,
     pub altitude: Option<f64>,

@@ -5,9 +5,9 @@
 :username := (getenv "EASEE_USERNAME")
 :password := (getenv "EASEE_PASSWORD")
 
-:token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjMwMDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmljbGFzICBSb3NlbmdyZW4iLCJuYmYiOjE2NzY1MDY4OTMsImV4cCI6MTY3NjU5MzI5MywiaWF0IjoxNjc2NTA2ODkzLCJyb2xlIjoiVXNlciJ9.vr1TjX-pWHQDoAo4jzOYqGbCutMy7c-3I8foQYJm0Gw
+:token = eyjhbgcioijiuzi1niisinr5cci6ikpxvcisimn0esi6ikpxvcj9.eyjby2nvdw50swqiojmwmdk4mswivxnlcklkijoynju1mtqsinvuaxf1zv9uyw1lijoitmljbgfzicbsb3nlbmdyzw4ilcjuymyioje2nzy3mzewntcsimv4cci6mty3njgxnzq1nywiawf0ijoxnjc2nzmxmdu3lcjyb2xlijoivxnlcij9.w1-g1yhgv3w9tmn8viyxgtqumetkqynfsqsh9bnjihy
 
-:refreshToken = IzQAEcDUX960ZNkjdsYw1Ot7RTOTGIM4XgSbyEn+uLM=
+:refreshToken = +NBGkfmRNoK2JGeDl8DEZDpRNFps3+uo2ZFewxwht30=
 
 
 # Login
