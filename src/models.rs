@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-pub type DateTime = chrono::DateTime<chrono::Utc>;
+mod datetime;
+
+pub use datetime::DateTime;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct SiteId(pub i64);
@@ -30,7 +32,11 @@ pub struct Site {
     pub circuits: Vec<Circuit>,
     #[serde(default = "Vec::new")]
     pub equalizers: Vec<Equalizer>,
+
+    #[serde(with = "datetime::format")]
     pub created_on: DateTime,
+
+    #[serde(with = "datetime::format")]
     pub updated_on: DateTime,
     pub user_role: u8, // 1, 2, 3, 20
     #[serde(default = "Vec::new")]
@@ -47,7 +53,7 @@ pub struct SiteSub {
     pub address: Address,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Address {
     pub street: Option<String>,
@@ -60,7 +66,7 @@ pub struct Address {
     pub altitude: Option<f64>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Country {
     pub id: String,
@@ -68,7 +74,7 @@ pub struct Country {
     pub phone_prefix: u32,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContactInfo {
     pub installer_name: String,
@@ -78,7 +84,7 @@ pub struct ContactInfo {
     pub company: Option<String>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Circuit {
     pub id: i64,
@@ -92,7 +98,7 @@ pub struct Circuit {
     pub parent_circuit_id: Option<String>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Charger {
     pub id: String,
@@ -107,7 +113,7 @@ pub struct Charger {
     pub is_temporary: bool,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BackPlate {
     pub id: String,
@@ -116,7 +122,7 @@ pub struct BackPlate {
     pub features: Vec<i32>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Equalizer {
     pub id: String,
@@ -125,10 +131,13 @@ pub struct Equalizer {
     pub circuit_id: i32,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChargerSession {
+    #[serde(with = "datetime::format")]
     pub car_connected: DateTime,
+
+    #[serde(with = "datetime::format")]
     pub car_disconnected: DateTime,
     pub kilo_watt_hours: f64,
     pub price_per_kwh_excluding_vat: f64,
@@ -138,7 +147,11 @@ pub struct ChargerSession {
     pub vat_percentage: f64,
     pub currency: String,
     pub actual_duration_seconds: i64,
+
+    #[serde(with = "datetime::format")]
     pub first_energy_transfer_period_started: DateTime,
+
+    #[serde(with = "datetime::format")]
     pub last_energy_transfer_period_end: DateTime,
     pub id: i64,
 }
