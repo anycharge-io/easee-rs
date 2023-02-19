@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+mod charger_session;
+
 pub mod datetime;
 
-pub use datetime::DateTime;
+pub use {charger_session::*, datetime::DateTime};
 
 pub type Date = chrono::NaiveDate;
 
@@ -131,29 +133,4 @@ pub struct Equalizer {
     pub name: String,
     pub site_id: i32,
     pub circuit_id: i32,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ChargerSession {
-    #[serde(with = "datetime::format")]
-    pub car_connected: DateTime,
-
-    #[serde(with = "datetime::format")]
-    pub car_disconnected: DateTime,
-    pub kilo_watt_hours: f64,
-    pub price_per_kwh_excluding_vat: f64,
-    pub price_pr_kwh_including_vat: f64,
-    pub cost_excluding_vat: f64,
-    pub cost_including_vat: f64,
-    pub vat_percentage: f64,
-    pub currency: String,
-    pub actual_duration_seconds: i64,
-
-    #[serde(with = "datetime::format")]
-    pub first_energy_transfer_period_started: DateTime,
-
-    #[serde(with = "datetime::format")]
-    pub last_energy_transfer_period_end: DateTime,
-    pub id: i64,
 }

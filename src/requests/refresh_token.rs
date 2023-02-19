@@ -24,7 +24,7 @@ impl RefreshSession {
             )
             .await?;
 
-        let session = self.access_token.parse::<Session>()?;
+        let session = res.access_token.parse::<Session>()?;
 
         Ok((session, RefreshToken(res.refresh_token)))
     }

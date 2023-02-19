@@ -1,7 +1,4 @@
-use crate::{
-    models::{datetime, DateTime},
-    ChargerSession, Client, NoBody, Result,
-};
+use crate::{models::DateTime, ChargerSession, Client, NoBody, Result};
 
 pub struct GetChargerSessions {
     charger_id: String,

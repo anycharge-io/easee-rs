@@ -5,14 +5,13 @@
 :username := (getenv "EASEE_USERNAME")
 :password := (getenv "EASEE_PASSWORD")
 
-:token = eyjhbgcioijiuzi1niisinr5cci6ikpxvcisimn0esi6ikpxvcj9.eyjby2nvdw50swqiojmwmdk4mswivxnlcklkijoynju1mtqsinvuaxf1zv9uyw1lijoitmljbgfzicbsb3nlbmdyzw4ilcjuymyioje2nzy3mzewntcsimv4cci6mty3njgxnzq1nywiawf0ijoxnjc2nzmxmdu3lcjyb2xlijoivxnlcij9.w1-g1yhgv3w9tmn8viyxgtqumetkqynfsqsh9bnjihy
+:token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjMwMDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmljbGFzICBSb3NlbmdyZW4iLCJyb2xlIjoiVXNlciIsIm5iZiI6MTY3NjgzMzk1NiwiZXhwIjoxNjc2OTIwMzU2LCJpYXQiOjE2NzY4MzM5NTZ9.jNJdvBal8HGr7G_4t1bbS_7yspkzY2Mt0bB0xRI7nWE
 
 :refreshToken = +NBGkfmRNoK2JGeDl8DEZDpRNFps3+uo2ZFewxwht30=
 
 
 # Login
 POST :base_url/api/accounts/login
-Authorization: Bearer :token
 Accept: application/json
 Content-type: application/json
 
