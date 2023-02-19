@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-mod datetime;
+pub mod datetime;
 
 pub use datetime::DateTime;
+
+pub type Date = chrono::NaiveDate;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct SiteId(pub i64);
@@ -103,7 +105,7 @@ pub struct Circuit {
 pub struct Charger {
     pub id: String,
     pub name: String,
-    pub color: u8, // 1 - 5
+    pub color: Option<u8>, // 1 - 5
     pub created_on: String,
     pub updated_on: String,
     pub back_plate: BackPlate,

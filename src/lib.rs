@@ -25,6 +25,12 @@ pub enum Error {
         err: serde_json::Error,
         body: String,
     },
+
+    #[error("failed to refresh session: {0}")]
+    RefreshSessionFailed(Box<Self>),
+
+    #[error("invalid access token: {0}")]
+    AccessTokenParse(#[from] client::auth::ParseError),
 }
 
 pub trait OptionalResult<T> {
