@@ -33,7 +33,7 @@ pub struct Session {
 
 impl Session {
     pub fn is_expired(&self) -> bool {
-        self.expires_at < Utc::now()
+        Utc::now() < self.expires_at
     }
 }
 

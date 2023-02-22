@@ -1,8 +1,8 @@
 pub mod auth;
 
 use std::{borrow::Cow, ops::Deref, sync::Arc};
-
 use tokio::sync::Mutex;
+use tracing::info;
 
 use crate::{requests, Error, Result};
 pub use auth::Session;
@@ -173,12 +173,17 @@ impl Client {
                 session,
                 refresh_token,
             } if session.is_expired() => {
+                info!("Refreshing access token");
                 match requests::RefreshSession::new(session.raw.clone(), refresh_token.clone())
                     .send(self)
                     .await
                 {
                     Ok((session, refresh_token)) => {
                         let access_token = session.raw.clone();
+                        info!(
+                            "new access token: `{}`\nRefresh token: `{}`",
+                            access_token, refresh_token.0
+                        );
                         *state = AuthState::Authenticated {
                             session,
                             refresh_token,
@@ -191,10 +196,7 @@ impl Client {
                 }
             }
 
-            AuthState::Authenticated { session, .. } => {
-                //
-                Ok(session.raw.clone())
-            }
+            AuthState::Authenticated { session, .. } => Ok(session.raw.clone()),
 
             AuthState::Unauthenticated => Err(Error::Unauthenticated),
         }

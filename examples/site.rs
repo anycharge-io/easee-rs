@@ -3,6 +3,8 @@ use easee_rs::{requests::GetSite, Client, SiteId};
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
+    tracing_subscriber::fmt().init();
+
     let site_id = std::env::args()
         .nth(1)
         .context("expected site id as first arg")?
