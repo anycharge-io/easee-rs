@@ -5,10 +5,13 @@
 :username := (getenv "EASEE_USERNAME")
 :password := (getenv "EASEE_PASSWORD")
 
-:token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjMwMDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmljbGFzICBSb3NlbmdyZW4iLCJyb2xlIjoiVXNlciIsIm5iZiI6MTY3NjgzMzk1NiwiZXhwIjoxNjc2OTIwMzU2LCJpYXQiOjE2NzY4MzM5NTZ9.jNJdvBal8HGr7G_4t1bbS_7yspkzY2Mt0bB0xRI7nWE
+:token := (getenv "EASEE_ACCESS_TOKEN")
+:refreshToken := (getenv "EASEE_REFRESH_TOKEN")
 
-:refreshToken = +NBGkfmRNoK2JGeDl8DEZDpRNFps3+uo2ZFewxwht30=
 
+# :token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjMwMDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmljbGFzICBSb3NlbmdyZW4iLCJuYmYiOjE2NzcyMDIyNzgsImV4cCI6MTY3NzI4ODY3OCwiaWF0IjoxNjc3MjAyMjc4LCJyb2xlIjoiVXNlciJ9.LxFVWydHDG_HaWRxLhEqt_Uj2DPSwXaNDP346GjXRac
+# 
+# :refreshToken = waHfOJOj2syvlSk+aUZHgJTF+ORybCpelGyTuarXzM8=
 
 # Login
 POST :base_url/api/accounts/login
@@ -57,6 +60,16 @@ Accept: application/json
 GET :base_url/api/sites/575766
 Authorization: Bearer :token
 Accept: application/json
+
+
+# Get Charger
+# 576136 - Brf Lindblomman 212
+# 575766 - Brf Lindblomman 213
+# 
+GET :base_url/api/chargers/EC9TVZ6L
+Authorization: Bearer :token
+Accept: application/json
+
 
 
 # Get Charger sessions

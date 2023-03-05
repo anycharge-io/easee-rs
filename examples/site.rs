@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use easee_rs::{requests::GetSite, Client, SiteId};
+use easee::{requests::GetSite, Client, SiteId};
 
 #[tokio::main]
 pub async fn main() -> Result<()> {

@@ -33,11 +33,11 @@ pub struct Session {
 
 impl Session {
     pub fn is_expired(&self) -> bool {
-        Utc::now() < self.expires_at
+        dbg!(self.expires_at < Utc::now())
     }
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 struct JsonAccessToken {
     #[serde(rename = "AccountId")]
     account_id: Option<u64>,
@@ -74,18 +74,20 @@ impl FromStr for Session {
             Err(err) => return Err(ParseError::UnexpectedData(err)),
         };
 
-        let issued_at = chrono::Utc.timestamp_millis_opt(des.iat).latest().ok_or(
-            ParseError::InvalidUtcTime {
+        let issued_at = chrono::Utc
+            .timestamp_millis_opt(des.iat * 1000)
+            .latest()
+            .ok_or(ParseError::InvalidUtcTime {
                 unix_ts: des.iat,
                 field: "iat",
-            },
-        )?;
-        let expires_at = chrono::Utc.timestamp_millis_opt(des.exp).latest().ok_or(
-            ParseError::InvalidUtcTime {
+            })?;
+        let expires_at = chrono::Utc
+            .timestamp_millis_opt(des.exp * 1000)
+            .latest()
+            .ok_or(ParseError::InvalidUtcTime {
                 unix_ts: des.exp,
                 field: "exp",
-            },
-        )?;
+            })?;
 
         Ok(Session {
             raw: s.into(),

@@ -30,6 +30,7 @@ impl RefreshSession {
     }
 }
 
+#[allow(dead_code)]
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Reply {

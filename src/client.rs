@@ -21,7 +21,7 @@ pub enum FromEnvError {
     InvalidAccessToken(#[from] auth::ParseError),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum AuthState {
     Authenticated {
         session: auth::Session,
@@ -32,9 +32,11 @@ enum AuthState {
 
 #[derive(Clone)]
 pub struct AccessToken(pub String);
-#[derive(Clone)]
+
+#[derive(Clone, Debug)]
 pub struct RefreshToken(pub String);
 
+#[derive(Clone)]
 pub struct Client {
     c: reqwest::Client,
     base_url: Cow<'static, str>,
@@ -167,6 +169,8 @@ impl Client {
 
     async fn access_token(&self) -> Result<String> {
         let mut state = self.auth_state.lock().await;
+
+        info!("getting access token from {:?}", state.deref());
 
         match state.deref() {
             AuthState::Authenticated {

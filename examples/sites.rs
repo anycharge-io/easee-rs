@@ -1,11 +1,14 @@
 use anyhow::Result;
-use easee_rs::{requests::GetSites, Client};
+use easee::{requests::GetSites, Client};
+use tracing::info;
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
+
     let client = Client::from_env()?;
 
+    info!("fetching sites");
     let sites = GetSites::default().send(&client).await?;
 
     println!("Fetched sites:");
