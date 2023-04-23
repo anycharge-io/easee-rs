@@ -70,7 +70,7 @@ mod tests {
   {
     "id": 3,
     "siteKey": "1234-1324",
-    "name": "Ulf Rosengren",
+    "name": "Deru",
     "levelOfAccess": null,
     "address": {
       "street": "Streeety",

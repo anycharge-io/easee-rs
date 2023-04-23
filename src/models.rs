@@ -111,9 +111,9 @@ pub struct Charger {
     pub created_on: String,
     pub updated_on: String,
     pub back_plate: BackPlate,
-    pub level_of_access: u8, // 1 - 3
-    pub product_code: u32,   // 1, 100, 1000
-    pub user_role: u8,       // 1, 2, 3, 20
+    pub level_of_access: Option<u8>, // 1 - 3
+    pub product_code: u32,           // 1, 100, 1000
+    pub user_role: u8,               // 1, 2, 3, 20
     pub is_temporary: bool,
 }
 
@@ -132,5 +132,5 @@ pub struct Equalizer {
     pub id: String,
     pub name: String,
     pub site_id: i32,
-    pub circuit_id: i32,
+    pub circuit_id: Option<i32>,
 }

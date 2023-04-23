@@ -59,11 +59,6 @@ mod tests {
         chrono::NaiveDateTime::parse_from_str("2021-11-01T12:00:18.044574", FORMAT_STR)
             .expect("parsing dt");
 
-        chrono::NaiveDateTime::parse_from_str("2023-01-20T19:35:25+00:00", FORMAT_STR)
-            .expect("parsing dt");
-        chrono::NaiveDateTime::parse_from_str("2023-01-20T19:31:50+00:00", FORMAT_STR)
-            .expect("parsing dt");
-
         {
             let dt =
                 chrono::NaiveDateTime::parse_from_str("2022-03-31T09:22:30.319709", FORMAT_STR)

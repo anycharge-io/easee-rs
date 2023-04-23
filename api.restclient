@@ -5,7 +5,7 @@
 :username := (getenv "EASEE_USERNAME")
 :password := (getenv "EASEE_PASSWORD")
 
-#:token := (getenv "EASEE_ACCESS_TOKEN")
+:token := (getenv "EASEE_ACCESS_TOKEN")
 :refreshToken := (getenv "EASEE_REFRESH_TOKEN")
 
 
@@ -22,6 +22,7 @@ Content-type: application/json
 
 
 # Refresh token
+#
 POST :base_url/api/accounts/refresh_token
 Authorization: Bearer :token
 Accept: application/json
@@ -35,63 +36,57 @@ Content-type: application/json
 
 
 # Get Profile
+#
 GET :base_url/api/accounts/profile
 Authorization: Bearer :token
 Accept: application/json
 
 
 # Get Sites
-# 576136 - Brf Lindblomman 212
-# 575766 - Brf Lindblomman 213
-# 
+#
 GET :base_url/api/sites
 Authorization: Bearer :token
 Accept: application/json
 
 
+:site_id = 575766
 
-# Get Site
-# 576136 - Brf Lindblomman 212
-# 575766 - Brf Lindblomman 213
-# 
-GET :base_url/api/sites/575766
+
+# Get a Site
+#
+GET :base_url/api/sites/:site_id
 Authorization: Bearer :token
 Accept: application/json
 
+
+:charger_id = ""
 
 # Get Charger
-# 576136 - Brf Lindblomman 212
-# 575766 - Brf Lindblomman 213
-# 
-GET :base_url/api/chargers/EC9TVZ6L
+#
+GET :base_url/api/chargers/:charger_id
 Authorization: Bearer :token
 Accept: application/json
 
 
 
 # Get Charger sessions
-# Parkering 14: EC3VJ7GU
-GET :base_url/api/sessions/charger/EC3VJ7GU/sessions/2023-01-01/2023-01-21
+#
+GET :base_url/api/sessions/charger/:charger_id/sessions/2023-01-01/2023-01-21
 Authorization: Bearer :token
 Accept: application/json
 
 
 # Get Charger sessions
-# Parkering 14: EC3VJ7GU
-GET :base_url/api/sessions/charger/EC3VJ7GU/hourly
+#
+GET :base_url/api/sessions/charger/:charger_id/hourly
 Authorization: Bearer :token
 Accept: application/json
-
-
 
 
 
 # Get Site Consumption report
 #
-# 576136 - Brf Lindblomman 212
-# 575766 - Brf Lindblomman 213
-#
-GET :base_url/api/sessions/export/575766/3/2023-01-01/2023-01-21
+GET :base_url/api/sessions/export/:site_id/3/2023-01-01/2023-01-21
 Authorization: Bearer :token
 Accept: application/json
 
