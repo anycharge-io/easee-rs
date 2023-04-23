@@ -1,5 +1,5 @@
 use anyhow::Result;
-use easee::{requests::GetSites, Client};
+use easeeapi::{requests::GetSites, Client};
 use tracing::info;
 
 #[tokio::main]

@@ -5,13 +5,10 @@
 :username := (getenv "EASEE_USERNAME")
 :password := (getenv "EASEE_PASSWORD")
 
-:token := (getenv "EASEE_ACCESS_TOKEN")
+#:token := (getenv "EASEE_ACCESS_TOKEN")
 :refreshToken := (getenv "EASEE_REFRESH_TOKEN")
 
 
-# :token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjMwMDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmljbGFzICBSb3NlbmdyZW4iLCJuYmYiOjE2NzcyMDIyNzgsImV4cCI6MTY3NzI4ODY3OCwiaWF0IjoxNjc3MjAyMjc4LCJyb2xlIjoiVXNlciJ9.LxFVWydHDG_HaWRxLhEqt_Uj2DPSwXaNDP346GjXRac
-# 
-# :refreshToken = waHfOJOj2syvlSk+aUZHgJTF+ORybCpelGyTuarXzM8=
 
 # Login
 POST :base_url/api/accounts/login
