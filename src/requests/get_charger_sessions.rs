@@ -17,8 +17,9 @@ impl GetChargerSessions {
 
     pub async fn send(&self, client: &Client) -> Result<Vec<ChargerSession>> {
         let charger_id = &self.charger_id;
-        let from_s = &self.from.to_rfc3339();
-        let to_s = &self.to.to_rfc3339();
+
+        let from_s = self.from.to_string();
+        let to_s = self.to.to_string();
 
         let url = format!("api/sessions/charger/{charger_id}/{from_s}/{to_s}");
         client
@@ -29,8 +30,6 @@ impl GetChargerSessions {
 
 #[cfg(test)]
 mod tests {
-
-    use chrono::{Datelike, Timelike};
 
     use super::*;
 
@@ -58,18 +57,21 @@ mod tests {
 
         assert_eq!(session.kilo_watt_hours, 0.581242);
 
-        assert_eq!(session.car_connected.year(), 2023);
-        assert_eq!(session.car_connected.month(), 1);
-        assert_eq!(session.car_connected.day(), 20);
-        assert_eq!(session.car_connected.hour(), 19);
-        assert_eq!(session.car_connected.minute(), 31);
-        assert_eq!(session.car_connected.second(), 46);
+        assert_eq!(session.car_connected.0.year(), 2023);
+        assert_eq!(session.car_connected.0.month(), time::Month::January);
+        assert_eq!(session.car_connected.0.day(), 20);
+        assert_eq!(session.car_connected.0.hour(), 19);
+        assert_eq!(session.car_connected.0.minute(), 31);
+        assert_eq!(session.car_connected.0.second(), 46);
 
-        assert_eq!(session.first_energy_transfer_period_started.year(), 2023);
-        assert_eq!(session.first_energy_transfer_period_started.month(), 1);
-        assert_eq!(session.first_energy_transfer_period_started.day(), 20);
-        assert_eq!(session.first_energy_transfer_period_started.hour(), 19);
-        assert_eq!(session.first_energy_transfer_period_started.minute(), 31);
-        assert_eq!(session.first_energy_transfer_period_started.second(), 50);
+        assert_eq!(session.first_energy_transfer_period_started.0.year(), 2023);
+        assert_eq!(
+            session.first_energy_transfer_period_started.0.month(),
+            time::Month::January
+        );
+        assert_eq!(session.first_energy_transfer_period_started.0.day(), 20);
+        assert_eq!(session.first_energy_transfer_period_started.0.hour(), 19);
+        assert_eq!(session.first_energy_transfer_period_started.0.minute(), 31);
+        assert_eq!(session.first_energy_transfer_period_started.0.second(), 50);
     }
 }

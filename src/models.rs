@@ -6,8 +6,6 @@ pub mod datetime;
 
 pub use {charger_session::*, datetime::DateTime};
 
-pub type Date = chrono::NaiveDate;
-
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct SiteId(pub i64);
 
@@ -37,10 +35,8 @@ pub struct Site {
     #[serde(default = "Vec::new")]
     pub equalizers: Vec<Equalizer>,
 
-    #[serde(with = "datetime::format")]
     pub created_on: DateTime,
 
-    #[serde(with = "datetime::format")]
     pub updated_on: DateTime,
     pub user_role: u8, // 1, 2, 3, 20
     #[serde(default = "Vec::new")]

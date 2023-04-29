@@ -14,6 +14,7 @@ pub struct ChargerSession {
     pub vat_percentage: Option<f64>,
     pub currency: Option<String>,
     pub actual_duration_seconds: i64,
+
     pub first_energy_transfer_period_started: DateTime,
     pub last_energy_transfer_period_end: DateTime,
     pub id: i64,

@@ -1,6 +1,5 @@
-use crate::models;
+use crate::{models, DateTime};
 use base64::{engine::general_purpose, Engine};
-use chrono::{TimeZone, Utc};
 use std::str::FromStr;
 
 #[derive(Debug, thiserror::Error)]
@@ -33,7 +32,7 @@ pub struct Session {
 
 impl Session {
     pub fn is_expired(&self) -> bool {
-        dbg!(self.expires_at < Utc::now())
+        dbg!(self.expires_at.0 < DateTime::now_utc().0)
     }
 }
 
@@ -74,17 +73,14 @@ impl FromStr for Session {
             Err(err) => return Err(ParseError::UnexpectedData(err)),
         };
 
-        let issued_at = chrono::Utc
-            .timestamp_millis_opt(des.iat * 1000)
-            .latest()
-            .ok_or(ParseError::InvalidUtcTime {
+        let issued_at =
+            DateTime::from_unix_timestamp(des.iat).map_err(|_| ParseError::InvalidUtcTime {
                 unix_ts: des.iat,
                 field: "iat",
             })?;
-        let expires_at = chrono::Utc
-            .timestamp_millis_opt(des.exp * 1000)
-            .latest()
-            .ok_or(ParseError::InvalidUtcTime {
+
+        let expires_at =
+            DateTime::from_unix_timestamp(des.exp).map_err(|_| ParseError::InvalidUtcTime {
                 unix_ts: des.exp,
                 field: "exp",
             })?;
