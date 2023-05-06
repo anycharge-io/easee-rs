@@ -70,7 +70,6 @@ Accept: application/json
 
 
 # Get Charger sessions
-#
 GET :base_url/api/sessions/charger/EC3VJ7GU/sessions/2023-04-01/2023-04-30
 Authorization: Bearer :token
 Accept: application/json

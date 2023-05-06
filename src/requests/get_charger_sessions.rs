@@ -1,32 +1,32 @@
-use crate::{models::DateTime, ChargerSession, Client, NoBody, Result};
+use crate::{ChargerSession, Client, NoBody, Result};
 
 pub struct GetChargerSessions {
     charger_id: String,
-    from: DateTime,
-    to: DateTime,
+    from: time::Date,
+    to: time::Date,
 }
 
 impl GetChargerSessions {
-    pub fn new<D>(charger_id: impl Into<String>, from: D, to: D) -> Self
-    where
-        DateTime: From<D>,
-    {
+    pub fn new(charger_id: impl Into<String>, from: time::Date, to: time::Date) -> Self {
         Self {
             charger_id: charger_id.into(),
-            from: DateTime::from(from),
-            to: DateTime::from(to),
+            from,
+            to,
         }
     }
 
     pub async fn send(&self, client: &Client) -> Result<Vec<ChargerSession>> {
+        let df = time::macros::format_description!("[year]-[month]-[day]");
+
         let charger_id = &self.charger_id;
 
-        let from_s = self.from.to_string();
-        let to_s = self.to.to_string();
+        let from_s = self.from.format(&df).unwrap();
+        let to_s = self.to.format(&df).unwrap();
 
-        let url = format!("api/sessions/charger/{charger_id}/{from_s}/{to_s}");
+        let url = format!("api/sessions/charger/{charger_id}/sessions/{from_s}/{to_s}");
+
         client
-            .req::<_, Vec<ChargerSession>>(http::Method::GET, &url, NoBody)
+            .req::<_, Vec<ChargerSession>>(http::Method::GET, &dbg!(url), NoBody)
             .await
     }
 }
