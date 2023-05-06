@@ -7,11 +7,14 @@ pub struct GetChargerSessions {
 }
 
 impl GetChargerSessions {
-    pub fn new(charger_id: impl Into<String>, from: DateTime, to: DateTime) -> Self {
+    pub fn new<D>(charger_id: impl Into<String>, from: D, to: D) -> Self
+    where
+        DateTime: From<D>,
+    {
         Self {
             charger_id: charger_id.into(),
-            from,
-            to,
+            from: DateTime::from(from),
+            to: DateTime::from(to),
         }
     }
 

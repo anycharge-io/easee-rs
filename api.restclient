@@ -59,7 +59,7 @@ Authorization: Bearer :token
 Accept: application/json
 
 
-:charger_id = ""
+:charger_id = "EC3VJ7GU"
 
 # Get Charger
 #
@@ -71,7 +71,7 @@ Accept: application/json
 
 # Get Charger sessions
 #
-GET :base_url/api/sessions/charger/:charger_id/sessions/2023-01-01/2023-01-21
+GET :base_url/api/sessions/charger/EC3VJ7GU/sessions/2023-04-01/2023-04-30
 Authorization: Bearer :token
 Accept: application/json
 
