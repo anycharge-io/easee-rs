@@ -130,3 +130,20 @@ pub struct Equalizer {
     pub site_id: i32,
     pub circuit_id: Option<i32>,
 }
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Profile {
+    pub user_id: i64,
+    #[serde(rename = "eMail")]
+    pub email: String,
+
+    #[serde(rename = "phoneNo")]
+    pub phone_nr: String,
+
+    #[serde(rename = "firstName")]
+    pub firstname: String,
+
+    #[serde(rename = "lastName")]
+    pub lastname: String,
+}
