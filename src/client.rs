@@ -9,7 +9,7 @@ pub use auth::Session;
 
 //use leaky_bucket_lite::LeakyBucket;
 
-static BASE_URL: &str = "https://api.easee.cloud";
+static BASE_URL: &str = "https://api.easee.com";
 
 #[derive(Debug, thiserror::Error)]
 pub enum FromEnvError {
