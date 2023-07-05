@@ -65,7 +65,7 @@ impl FromStr for Session {
             .next()
             .ok_or(ParseError::Malformed("missing claims block"))?;
 
-        let bs = general_purpose::STANDARD.decode(claims)?;
+        let bs = general_purpose::STANDARD_NO_PAD.decode(claims)?;
         let des = match serde_json::from_slice::<JsonAccessToken>(&bs) {
             Ok(res) => res,
 
@@ -128,6 +128,13 @@ mod tests {
     #[test]
     fn parse_access_token() {
         let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjM1MDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmlib3F4ICB3bTNlb2d3ZW4iLCJuYmYiOjE2NzY3MzEwNTcsImV4cCI6MTY3NjgxNzQ1NywiaWF0IjoxNjc2NzMxMDU3LCJyb2xlIjoiVXNlciJ9.W1-G1yhGv3w9tMn8vIyXgTqUMetkqyNFsQSh9BnjiHY";
+
+        token.parse::<Session>().expect("Parsing");
+    }
+
+    #[test]
+    fn parse_example_token_no_pad() {
+        let token = "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiZDQ3MjI5Ny04NGEzLTQzNzgtYmFkZS0yOGZiMGY1M2Y4YTIifQ.eyJleHAiOjE2ODg2ODc0NTksImlhdCI6MTY4ODYwMTA1OSwianRpIjoiYzNmNDViMmQtY2M2Mi00MjUzLTk2MzktMDgwMzJlMDk2NWQ2IiwiaXNzIjoiaHR0cHM6Ly9hdXRoLmVhc2VlLmNvbS9yZWFsbXMvZWFzZWUiLCJhdWQiOiJodHRwczovL2F1dGguZWFzZWUuY29tL3JlYWxtcy9lYXNlZSIsInN1YiI6IjljMTIzYTlkLTQ3YjUtNDc0OC1hYTUxLWVkZWQ4YTBkMWNiNCIsInR5cCI6IlJlZnJlc2giLCJhenAiOiJlYXNlZSIsInNlc3Npb25fc3RhdGUiOiIwY2U4MGQ3My05OTVhLTQ3NzEtYWFmNi0xNmJmMjEzOTNkZjkiLCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJzaWQiOiIwY2U4MGQ3My05OTVhLTQ3NzEtYWFmNi0xNmJmMjEzOTNkZjkifQ.E-IJRoeLSPFhFVdzLOFVo-s2wS5h5iO58F6vUL_mjT8";
 
         token.parse::<Session>().expect("Parsing");
     }
