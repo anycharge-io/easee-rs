@@ -10,8 +10,8 @@ pub enum ParseError {
     #[error("invalid base64: {0}")]
     InvalidB64(#[from] base64::DecodeError),
 
-    #[error("invalid json")]
-    InvalidJson,
+    #[error("invalid json: {0}")]
+    InvalidJson(serde_json::Error),
 
     #[error("token json contained unexpected data: {0}")]
     UnexpectedData(serde_json::Error),
@@ -25,9 +25,10 @@ pub struct Session {
     pub raw: String,
     pub issued_at: models::DateTime,
     pub expires_at: models::DateTime,
-    pub account_id: Option<u64>,
-    pub user_id: Option<u64>,
-    pub role: UserRole,
+    pub account_id: Option<String>,
+
+    pub user_id: Option<String>,
+    pub role: Vec<UserRole>,
 }
 
 impl Session {
@@ -39,9 +40,9 @@ impl Session {
 #[derive(Debug, serde::Deserialize)]
 struct JsonAccessToken {
     #[serde(rename = "AccountId")]
-    account_id: Option<u64>,
+    account_id: Option<String>,
     #[serde(rename = "UserId")]
-    user_id: Option<u64>,
+    user_id: Option<String>,
 
     //unique_name: Option<String>,
 
@@ -50,7 +51,7 @@ struct JsonAccessToken {
     iat: i64,
 
     #[serde(rename = "role")]
-    role: Option<UserRole>,
+    role: Vec<UserRole>,
 }
 
 impl FromStr for Session {
@@ -69,7 +70,7 @@ impl FromStr for Session {
         let des = match serde_json::from_slice::<JsonAccessToken>(&bs) {
             Ok(res) => res,
 
-            Err(err) if err.is_syntax() => return Err(ParseError::InvalidJson),
+            Err(err) if err.is_syntax() => return Err(ParseError::InvalidJson(err)),
             Err(err) => return Err(ParseError::UnexpectedData(err)),
         };
 
@@ -91,7 +92,7 @@ impl FromStr for Session {
             expires_at,
             account_id: des.account_id,
             user_id: des.user_id,
-            role: des.role.unwrap_or(UserRole::Unknown),
+            role: des.role,
         })
     }
 }
@@ -106,35 +107,11 @@ pub enum UserRole {
 
 #[cfg(test)]
 mod tests {
-    use super::{JsonAccessToken, Session};
+    use super::Session;
 
     #[test]
-    fn deserialize_access_token() {
-        let s = r#"
-{
-  "AccountId": 300981,
-  "UserId": 265514,
-  "unique_name": "Niclas  Rosengren",
-  "nbf": 1676731057,
-  "exp": 1676817457,
-  "iat": 1676731057,
-  "role": "User"
-}
-"#;
-
-        serde_json::from_str::<JsonAccessToken>(s).expect("deserializing");
-    }
-
-    #[test]
-    fn parse_access_token() {
-        let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJBY2NvdW50SWQiOjM1MDk4MSwiVXNlcklkIjoyNjU1MTQsInVuaXF1ZV9uYW1lIjoiTmlib3F4ICB3bTNlb2d3ZW4iLCJuYmYiOjE2NzY3MzEwNTcsImV4cCI6MTY3NjgxNzQ1NywiaWF0IjoxNjc2NzMxMDU3LCJyb2xlIjoiVXNlciJ9.W1-G1yhGv3w9tMn8vIyXgTqUMetkqyNFsQSh9BnjiHY";
-
-        token.parse::<Session>().expect("Parsing");
-    }
-
-    #[test]
-    fn parse_example_token_no_pad() {
-        let token = "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiZDQ3MjI5Ny04NGEzLTQzNzgtYmFkZS0yOGZiMGY1M2Y4YTIifQ.eyJleHAiOjE2ODg2ODc0NTksImlhdCI6MTY4ODYwMTA1OSwianRpIjoiYzNmNDViMmQtY2M2Mi00MjUzLTk2MzktMDgwMzJlMDk2NWQ2IiwiaXNzIjoiaHR0cHM6Ly9hdXRoLmVhc2VlLmNvbS9yZWFsbXMvZWFzZWUiLCJhdWQiOiJodHRwczovL2F1dGguZWFzZWUuY29tL3JlYWxtcy9lYXNlZSIsInN1YiI6IjljMTIzYTlkLTQ3YjUtNDc0OC1hYTUxLWVkZWQ4YTBkMWNiNCIsInR5cCI6IlJlZnJlc2giLCJhenAiOiJlYXNlZSIsInNlc3Npb25fc3RhdGUiOiIwY2U4MGQ3My05OTVhLTQ3NzEtYWFmNi0xNmJmMjEzOTNkZjkiLCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJzaWQiOiIwY2U4MGQ3My05OTVhLTQ3NzEtYWFmNi0xNmJmMjEzOTNkZjkifQ.E-IJRoeLSPFhFVdzLOFVo-s2wS5h5iO58F6vUL_mjT8";
+    fn parse_exmaple_token_invalid_kind() {
+        let token = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJlcVJKMDhGMTFBQi14QWhnNnNSbXdxSE5PdzllS09JbmJaSVpISmpoOVc4In0.eyJleHAiOjE2ODg2MDYwMTIsImlhdCI6MTY4ODYwMjQxMiwianRpIjoiNTgyOWY5NzYtN2E2OS00ZGMyLThkYWQtMzQ4ZjQyNmVkNGFjIiwiaXNzIjoiaHR0cHM6Ly9hdXRoLmVhc2VlLmNvbS9yZWFsbXMvZWFzZWUiLCJhdWQiOlsiZWFzZWUtY2xvdWQiLCJlYXNlZS1kZXZpY2Utc2V0dGluZ3MiLCJlYXNlZS1hY2Nlc3MtY29udHJvbCIsImVhc2VlLXByaW1vcmRpYWwiLCJlYXNlZS1jaHJvbmljbGUiLCJlYXNlZS1jdXJyZW50LWRldmljZS1zdGF0ZSIsImVhc2VlLWNvbW1hbmRldXIiLCJlYXNlZSIsImFjY291bnQiXSwic3ViIjoiOWMxMjNhOWQtNDdiNS00NzQ4LWFhNTEtZWRlZDhhMGQxY2I0IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiZWFzZWUiLCJzZXNzaW9uX3N0YXRlIjoiYWE3NjVhY2EtOGRmYS00YzZmLTlmOTMtMTdhZTU3MGJkNmQ3IiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyJodHRwczovL3BvcnRhbC5lYXNlZS5jb20iLCJodHRwczovL29hdXRoLnBzdG1uLmlvIiwiaHR0cHM6Ly9maXJtd2FyZS1tYW5hZ2VyLmVhc2VlLmNsb3VkIiwiaHR0cHM6Ly9lYXNlZS5jbG91ZCJdLCJyZXNvdXJjZV9hY2Nlc3MiOnsiZWFzZWUtY29tbWFuZGV1ciI6eyJyb2xlcyI6WyJjb21tYW5kX2hpc3RvcnlfcmVhZCIsImNvbW1hbmRfd3JpdGUiXX0sImVhc2VlLXByaW1vcmRpYWwiOnsicm9sZXMiOlsiZGV2aWNlX21hbnVmYWN0dXJpbmdfcmVhZCJdfSwiZWFzZWUtY2hyb25pY2xlIjp7InJvbGVzIjpbIm9ic2VydmF0aW9uX2hpc3RvcnlfcmVhZCJdfSwiZWFzZWUtZGV2aWNlLXNldHRpbmdzIjp7InJvbGVzIjpbInNldHRpbmdzX3dyaXRlIiwic2V0dGluZ3NfcmVhZCJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19LCJlYXNlZS1jdXJyZW50LWRldmljZS1zdGF0ZSI6eyJyb2xlcyI6WyJvYnNlcnZhdGlvbl9zdGF0ZV9yZWFkIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwic2lkIjoiYWE3NjVhY2EtOGRmYS00YzZmLTlmOTMtMTdhZTU3MGJkNmQ3IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIkFjY291bnRJZCI6IjMwMDk4MSIsInJvbGUiOlsiVXNlciJdLCJTdXBwb3J0IjoiRmFsc2UiLCJVc2VySWQiOiIyNjU1MTQiLCJyb2xlcyI6WyJjb21tYW5kX2hpc3RvcnlfcmVhZCIsImNvbW1hbmRfd3JpdGUiLCJkZXZpY2VfbWFudWZhY3R1cmluZ19yZWFkIiwib2JzZXJ2YXRpb25faGlzdG9yeV9yZWFkIiwic2V0dGluZ3Nfd3JpdGUiLCJzZXR0aW5nc19yZWFkIiwibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSIsIm9ic2VydmF0aW9uX3N0YXRlX3JlYWQiXSwibmFtZSI6Ik5pY2xhcyBSb3NlbmdyZW4iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiIrNDY3MzcwNzc3NDYiLCJnaXZlbl9uYW1lIjoiTmljbGFzIiwiZmFtaWx5X25hbWUiOiJSb3NlbmdyZW4iLCJlbWFpbCI6Im5pY2xhc0BuaXJvLm51In0.kY1gDIIA6fx_jlt34SPQH4L9zA6_EBLyx3tfUF_9xDSoJcP0r5cp332qNRMs9IgsRYLjTtl5maahyAx-3ijnjlFDGr6Hr4cq9jAp7luV1YrpNuAK2UP91fZIEB6oSXw6slTZilQt1ccCp0Gj3S69QSkeKkInr-LVlaqQ4_xcWkzwBZGrC02umeKZVg2Sw7liTM9KYhEKzF_ZOPZL-ILly7fxZaPO10AV6S2XrA-qaCHDrxcKgP-u4OFdigONQE9IV5u6fxsE5FfW50ipRbuNwMO6BxKyshAWCWCmG2j_-fj1oRjCnthg-plUyQkKEYYltKNljbqORw_bxxq3exwVWQ";
 
         token.parse::<Session>().expect("Parsing");
     }

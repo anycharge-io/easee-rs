@@ -1,4 +1,5 @@
 mod client;
+pub mod from_str;
 mod models;
 pub mod requests;
 
