@@ -1,4 +1,4 @@
-use crate::{Client, NoBody, Result, SiteSub};
+use crate::{Client, NoBody, Result, SiteSub, StateAuthenticated};
 
 #[derive(Default, Clone)]
 pub struct GetSites {
@@ -23,7 +23,7 @@ impl GetSites {
         self
     }
 
-    pub async fn send(&self, client: &Client) -> Result<Vec<SiteSub>> {
+    pub async fn send(&self, client: &Client<StateAuthenticated>) -> Result<Vec<SiteSub>> {
         client.req(http::Method::GET, "api/sites", NoBody).await
     }
 }

@@ -1,8 +1,7 @@
 pub mod auth;
 
-use std::{borrow::Cow, ops::Deref, sync::Arc};
+use std::{borrow::Cow, sync::Arc};
 use tokio::sync::Mutex;
-use tracing::info;
 
 use crate::{requests, Error, Result};
 pub use auth::Session;
@@ -21,14 +20,18 @@ pub enum FromEnvError {
     InvalidAccessToken(#[from] auth::ParseError),
 }
 
-#[derive(Clone, Debug)]
-enum AuthState {
-    Authenticated {
-        session: auth::Session,
-        refresh_token: RefreshToken,
-    },
-    Unauthenticated,
+trait AuthState {}
+
+pub struct StateAuthenticated {
+    session: auth::Session,
+    refresh_token: RefreshToken,
 }
+
+pub struct StateUnauthenticated;
+
+impl AuthState for StateAuthenticated {}
+
+impl AuthState for StateUnauthenticated {}
 
 #[derive(Clone)]
 pub struct AccessToken(pub String);
@@ -37,54 +40,70 @@ pub struct AccessToken(pub String);
 pub struct RefreshToken(pub String);
 
 #[derive(Clone)]
-pub struct Client {
+pub struct Client<T>
+where
+    T: Send + 'static,
+{
     c: reqwest::Client,
     base_url: Cow<'static, str>,
-    auth_state: Arc<Mutex<AuthState>>,
+    auth_state: Arc<Mutex<T>>,
 }
 
-impl Client {
+impl Client<StateAuthenticated> {
     pub fn authenticated(
         access_token: &str,
         refresh_token: RefreshToken,
-    ) -> std::result::Result<Self, auth::ParseError> {
+    ) -> std::result::Result<Client<StateAuthenticated>, auth::ParseError> {
         let session = access_token.parse()?;
 
-        Ok(Self::new(AuthState::Authenticated {
-            session,
-            refresh_token,
-        }))
+        Ok(Client {
+            c: reqwest::ClientBuilder::new()
+                .user_agent("easee-rs")
+                .build()
+                .unwrap(), // Unwrap OK due to Infallible
+            base_url: Cow::Borrowed(BASE_URL),
+            auth_state: Arc::new(Mutex::new(StateAuthenticated {
+                session,
+                refresh_token,
+            })),
+        })
     }
 
-    pub fn unauthenticated() -> Self {
-        Self::new(AuthState::Unauthenticated)
-    }
-
-    pub fn from_env() -> std::result::Result<Self, FromEnvError> {
+    pub fn from_env() -> std::result::Result<Client<StateAuthenticated>, FromEnvError> {
         let access_token = std::env::var("EASEE_ACCESS_TOKEN")
             .map_err(|_| FromEnvError::Missing("EASEE_ACCESS_TOKEN"))?;
         let refresh_token = std::env::var("EASEE_REFRESH_TOKEN")
             .map_err(|_| FromEnvError::Missing("EASEE_REFRESH_TOKEN"))?;
 
-        let session = access_token.parse::<auth::Session>()?;
-
-        Ok(Self::new(AuthState::Authenticated {
-            session,
-            refresh_token: RefreshToken(refresh_token),
-        }))
+        Self::authenticated(&access_token, RefreshToken(refresh_token))
+            .map_err(FromEnvError::InvalidAccessToken)
     }
 
-    fn new(auth_state: AuthState) -> Self {
-        let c = reqwest::ClientBuilder::new()
-            .user_agent("easee-rs")
-            .build()
-            .unwrap(); // Unwrap OK due to Infallible
+    /// Attempts to refresh the active session. Applies and returns the newly fetched tokens.
+    pub async fn refresh_auth(&mut self) -> Result<(auth::Session, RefreshToken)> {
+        // Important to release lock before sending refresh.
+        let (session, refresh_token) = {
+            let state = self.auth_state.lock().await;
+            (state.session.clone(), state.refresh_token.clone())
+        };
 
-        Self {
-            c,
-            base_url: Cow::Borrowed(BASE_URL),
-            auth_state: Arc::new(Mutex::new(auth_state)),
+        let (new_session, new_refresh) =
+            requests::RefreshSessionToken::new(session.raw.clone(), refresh_token.clone())
+                .send(self)
+                .await?;
+
+        {
+            let mut state = self.auth_state.lock().await;
+            state.refresh_token = new_refresh.clone();
+            state.session = new_session.clone();
         }
+
+        Ok((new_session, new_refresh))
+    }
+
+    pub async fn get_auth_session(&self) -> (auth::Session, RefreshToken) {
+        let state = self.auth_state.lock().await;
+        (state.session.clone(), state.refresh_token.clone())
     }
 
     pub(crate) async fn req<B, R>(&self, method: http::Method, path: &str, body: B) -> Result<R>
@@ -92,7 +111,8 @@ impl Client {
         B: Body,
         R: serde::de::DeserializeOwned,
     {
-        let access_token = self.access_token().await?;
+        let state = self.auth_state.lock().await;
+        let access_token = &state.session.raw;
 
         let b = self
             .c
@@ -109,6 +129,7 @@ impl Client {
         if !status.is_success() {
             let err = match status {
                 http::StatusCode::NOT_FOUND => Error::NotFound,
+                http::StatusCode::UNAUTHORIZED => Error::CredentialsExpired,
                 status => Error::Failed(status),
             };
 
@@ -126,13 +147,38 @@ impl Client {
             }),
         }
     }
+}
 
-    pub(crate) async fn req_no_auth<B, R>(
+impl Client<StateUnauthenticated> {
+    pub fn unauthenticated() -> Client<StateUnauthenticated> {
+        Client {
+            c: reqwest::ClientBuilder::new()
+                .user_agent("easee-rs")
+                .build()
+                .unwrap(), // Unwrap OK due to Infallible
+            base_url: Cow::Borrowed(BASE_URL),
+            auth_state: Arc::new(Mutex::new(StateUnauthenticated)),
+        }
+    }
+
+    pub async fn login(
         &self,
-        method: http::Method,
-        path: &str,
-        body: B,
-    ) -> Result<R>
+        username: impl Into<String>,
+        password: impl Into<String>,
+    ) -> Result<Client<StateAuthenticated>> {
+        let (session, refresh_token) = requests::Login::new(username, password).send(self).await?;
+
+        Ok(Client {
+            c: self.c.clone(),
+            base_url: self.base_url.clone(),
+            auth_state: Arc::new(Mutex::new(StateAuthenticated {
+                session,
+                refresh_token,
+            })),
+        })
+    }
+
+    pub(crate) async fn req<B, R>(&self, method: http::Method, path: &str, body: B) -> Result<R>
     where
         B: Body,
         R: serde::de::DeserializeOwned,
@@ -164,45 +210,6 @@ impl Client {
                 err,
                 body: text_body,
             }),
-        }
-    }
-
-    async fn access_token(&self) -> Result<String> {
-        let mut state = self.auth_state.lock().await;
-
-        info!("getting access token from {:?}", state.deref());
-
-        match state.deref() {
-            AuthState::Authenticated {
-                session,
-                refresh_token,
-            } if session.is_expired() => {
-                info!("Refreshing access token");
-                match requests::RefreshSession::new(session.raw.clone(), refresh_token.clone())
-                    .send(self)
-                    .await
-                {
-                    Ok((session, refresh_token)) => {
-                        let access_token = session.raw.clone();
-                        info!(
-                            "new access token: `{}`\nRefresh token: `{}`",
-                            access_token, refresh_token.0
-                        );
-                        *state = AuthState::Authenticated {
-                            session,
-                            refresh_token,
-                        };
-
-                        Ok(access_token)
-                    }
-
-                    Err(err) => Err(Error::RefreshSessionFailed(Box::new(err))),
-                }
-            }
-
-            AuthState::Authenticated { session, .. } => Ok(session.raw.clone()),
-
-            AuthState::Unauthenticated => Err(Error::Unauthenticated),
         }
     }
 }

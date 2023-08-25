@@ -1,13 +1,13 @@
-use crate::{Client, JsonBody, RefreshToken, Result, Session};
+use crate::{Client, JsonBody, NewSession, RefreshToken, Result, Session, StateAuthenticated};
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RefreshSession {
+pub struct RefreshSessionToken {
     pub access_token: String,
     pub refresh_token: String,
 }
 
-impl RefreshSession {
+impl RefreshSessionToken {
     pub fn new(access_token: String, refresh_token: RefreshToken) -> Self {
         Self {
             access_token,
@@ -15,9 +15,12 @@ impl RefreshSession {
         }
     }
 
-    pub async fn send(&self, client: &Client) -> Result<(Session, RefreshToken)> {
+    pub async fn send(
+        &self,
+        client: &Client<StateAuthenticated>,
+    ) -> Result<(Session, RefreshToken)> {
         let res = client
-            .req_no_auth::<_, Reply>(
+            .req::<_, NewSession>(
                 http::Method::POST,
                 "/api/accounts/refresh_token",
                 JsonBody(self),
@@ -28,15 +31,4 @@ impl RefreshSession {
 
         Ok((session, RefreshToken(res.refresh_token)))
     }
-}
-
-#[allow(dead_code)]
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Reply {
-    access_token: String,
-    expires_in: u64,
-    access_claims: Vec<String>,
-    token_type: String,
-    refresh_token: String,
 }

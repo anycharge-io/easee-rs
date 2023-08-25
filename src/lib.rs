@@ -12,8 +12,8 @@ pub enum Error {
     #[error("Http: {0}")]
     Http(#[from] reqwest::Error),
 
-    #[error("Client has no Authentication credentials set. Login first")]
-    Unauthenticated,
+    #[error("Credentials expired")]
+    CredentialsExpired,
 
     #[error("not found")]
     NotFound,

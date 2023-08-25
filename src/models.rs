@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 mod charger_session;
+mod new_session;
 
 pub mod datetime;
 
-pub use {charger_session::*, datetime::DateTime};
+pub use {charger_session::*, datetime::DateTime, new_session::*};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct SiteId(pub i64);

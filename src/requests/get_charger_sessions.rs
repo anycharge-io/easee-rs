@@ -1,4 +1,4 @@
-use crate::{ChargerSession, Client, NoBody, Result};
+use crate::{ChargerSession, Client, NoBody, Result, StateAuthenticated};
 
 pub struct GetChargerSessions {
     charger_id: String,
@@ -7,6 +7,12 @@ pub struct GetChargerSessions {
 }
 
 impl GetChargerSessions {
+    /// Fetches sessions between [from - to[
+    /// Notice that to is exclusive.
+    ///
+    /// So to fetch sessions ended on the 2nd of april 2023:
+    /// * from:  2023-04-02
+    /// * from:  2023-04-03
     pub fn new(charger_id: impl Into<String>, from: time::Date, to: time::Date) -> Self {
         Self {
             charger_id: charger_id.into(),
@@ -15,7 +21,7 @@ impl GetChargerSessions {
         }
     }
 
-    pub async fn send(&self, client: &Client) -> Result<Vec<ChargerSession>> {
+    pub async fn send(&self, client: &Client<StateAuthenticated>) -> Result<Vec<ChargerSession>> {
         let df = time::macros::format_description!("[year]-[month]-[day]");
 
         let charger_id = &self.charger_id;

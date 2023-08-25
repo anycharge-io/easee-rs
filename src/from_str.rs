@@ -9,7 +9,7 @@ where
     <T as FromStr>::Err: fmt::Display,
 {
     de.deserialize_str(FromStrVisitor {
-        _marker: PhantomData::default(),
+        _marker: PhantomData,
     })
 }
 
@@ -38,7 +38,7 @@ where
         D: serde::Deserializer<'de>,
     {
         de.deserialize_str(FromStrVisitor {
-            _marker: PhantomData::default(),
+            _marker: PhantomData,
         })
         .map(Some)
     }
@@ -58,7 +58,7 @@ where
     <T as FromStr>::Err: fmt::Display,
 {
     de.deserialize_option(FromOptStrVisitor {
-        _marker: PhantomData::default(),
+        _marker: PhantomData,
     })
 }
 
