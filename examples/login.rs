@@ -17,7 +17,7 @@ pub async fn main() -> Result<()> {
 
     let client = client.login(username, password).await?;
 
-    let (session, refresh_token) = client.get_session().await;
+    let (session, refresh_token) = client.get_auth_session().await;
 
     println!("{session:#?}");
     println!("{refresh_token:#?}");

@@ -42,7 +42,7 @@ pub struct RefreshToken(pub String);
 #[derive(Clone)]
 pub struct Client<T>
 where
-    T: Send + 'static,
+    T: Send + Sync + 'static,
 {
     c: reqwest::Client,
     base_url: Cow<'static, str>,
