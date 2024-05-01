@@ -30,6 +30,12 @@ impl From<time::OffsetDateTime> for DateTime {
     }
 }
 
+impl From<DateTime> for time::OffsetDateTime {
+    fn from(dt: DateTime) -> time::OffsetDateTime {
+        dt.0
+    }
+}
+
 // static FORMAT_STR: &str = "%Y-%m-%dT%H:%M:%S%.f";
 
 impl str::FromStr for DateTime {

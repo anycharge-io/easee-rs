@@ -7,10 +7,10 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-base64 = "0.21"
-http = "0.2"
+base64 = "0.22"
+http = "1"
 leaky-bucket-lite = "0.5"
-reqwest = { version = "0.11", default_features = false, features = [ "json", "rustls-tls" ] }
+reqwest = { version = "0.12", default_features = false, features = [ "json", "rustls-tls" ] }
 serde = { version = "1", features = [ "derive" ] }
 serde_json = "1"
 thiserror = "1"

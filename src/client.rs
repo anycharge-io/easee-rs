@@ -130,7 +130,7 @@ impl Client<StateAuthenticated> {
             let err = match status {
                 http::StatusCode::NOT_FOUND => Error::NotFound,
                 http::StatusCode::UNAUTHORIZED => Error::CredentialsExpired,
-                status => Error::Failed(status),
+                status => Error::Failed(status.as_u16()),
             };
 
             return Err(err);
@@ -195,7 +195,7 @@ impl Client<StateUnauthenticated> {
         if !status.is_success() {
             let err = match status {
                 http::StatusCode::NOT_FOUND => Error::NotFound,
-                status => Error::Failed(status),
+                status => Error::Failed(status.as_u16()),
             };
 
             return Err(err);

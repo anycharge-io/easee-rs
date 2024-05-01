@@ -18,8 +18,8 @@ pub enum Error {
     #[error("not found")]
     NotFound,
 
-    #[error("Request failed with status: {0}")]
-    Failed(http::StatusCode),
+    #[error("Request failed with status: {0:03}")]
+    Failed(u16),
 
     #[error("Error deserializing reply: {err}. Body: {body}")]
     Deserializing {

@@ -54,21 +54,24 @@ mod tests {
 
         assert_eq!(session.kilo_watt_hours, 0.581242);
 
-        assert_eq!(session.car_connected.0.year(), 2023);
-        assert_eq!(session.car_connected.0.month(), time::Month::January);
-        assert_eq!(session.car_connected.0.day(), 20);
-        assert_eq!(session.car_connected.0.hour(), 19);
-        assert_eq!(session.car_connected.0.minute(), 31);
-        assert_eq!(session.car_connected.0.second(), 46);
+        let car_connected = session.car_connected;
 
-        assert_eq!(session.first_energy_transfer_period_started.0.year(), 2023);
-        assert_eq!(
-            session.first_energy_transfer_period_started.0.month(),
-            time::Month::January
-        );
-        assert_eq!(session.first_energy_transfer_period_started.0.day(), 20);
-        assert_eq!(session.first_energy_transfer_period_started.0.hour(), 19);
-        assert_eq!(session.first_energy_transfer_period_started.0.minute(), 31);
-        assert_eq!(session.first_energy_transfer_period_started.0.second(), 50);
+        assert_eq!(car_connected.0.year(), 2023);
+        assert_eq!(car_connected.0.month(), time::Month::January);
+        assert_eq!(car_connected.0.day(), 20);
+        assert_eq!(car_connected.0.hour(), 19);
+        assert_eq!(car_connected.0.minute(), 31);
+        assert_eq!(car_connected.0.second(), 46);
+
+        let started = session
+            .first_energy_transfer_period_started
+            .expect("should be set");
+
+        assert_eq!(started.0.year(), 2023);
+        assert_eq!(started.0.month(), time::Month::January);
+        assert_eq!(started.0.day(), 20);
+        assert_eq!(started.0.hour(), 19);
+        assert_eq!(started.0.minute(), 31);
+        assert_eq!(started.0.second(), 50);
     }
 }
