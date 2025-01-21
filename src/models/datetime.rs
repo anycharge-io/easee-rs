@@ -54,15 +54,15 @@ impl str::FromStr for DateTime {
 
         if s.contains('+') {
             time::OffsetDateTime::parse(s, FORMAT_WITH_OFFSET)
-                .map_err(|err| err.to_string())
+                .map_err(|err| format!("parsing `{s}` as offset datetime: {err}"))
                 .map(Self)
         } else if s.ends_with('Z') {
             time::PrimitiveDateTime::parse(s, FORMAT_Z)
-                .map_err(|err| format!("parsing datetime zulu format: {err}"))
+                .map_err(|err| format!("parsing `{s}` as datetime zulu format: {err}"))
                 .map(|dt| Self(dt.assume_utc()))
         } else {
             time::PrimitiveDateTime::parse(s, FORMAT)
-                .map_err(|err| format!("parsing datetime simple: {err}"))
+                .map_err(|err| format!("parsing `{s}` as datetime simple: {err}"))
                 .map(|dt| Self(dt.assume_utc()))
         }
     }

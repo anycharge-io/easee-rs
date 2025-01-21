@@ -94,6 +94,7 @@ mod tests {
     fn deserialize_failing_2() {
         // 2024-05-01T18:04:33.491368Z  WARN anycharge::easee_worker: EaseeWorker:
         // Easee API: Error deserializing reply: missing field `carConnected` at line 1 column 385. Body:
+
         let s = r#"
 {
   "chargerId": "EC3VJ7GU",
@@ -111,6 +112,15 @@ mod tests {
 }
 "#;
 
-        serde_json::from_str::<ChargerSession>(&s).expect("deserializing");
+        serde_json::from_str::<ChargerSession>(s).expect("deserializing");
+    }
+
+    // caught when skimming through logs, seems to be a list a sessions in which the field actualDurationSeconds fails to deserialize
+    #[test]
+    fn deserialize_failing_3() {
+        let s = include_str!("../../test_data/failing_sessions.json");
+
+        serde_json::from_str::<Vec<ChargerSession>>(s)
+            .expect("deserializing `test_data/failing_sessions.json`");
     }
 }
