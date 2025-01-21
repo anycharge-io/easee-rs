@@ -20,18 +20,12 @@ pub enum FromEnvError {
     InvalidAccessToken(#[from] auth::ParseError),
 }
 
-trait AuthState {}
-
 pub struct StateAuthenticated {
     session: auth::Session,
     refresh_token: RefreshToken,
 }
 
 pub struct StateUnauthenticated;
-
-impl AuthState for StateAuthenticated {}
-
-impl AuthState for StateUnauthenticated {}
 
 #[derive(Clone)]
 pub struct AccessToken(pub String);
