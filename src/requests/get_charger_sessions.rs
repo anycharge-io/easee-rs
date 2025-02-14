@@ -32,7 +32,7 @@ impl GetChargerSessions {
         let url = format!("api/sessions/charger/{charger_id}/sessions/{from_s}/{to_s}");
 
         client
-            .req::<_, Vec<ChargerSession>>(http::Method::GET, &dbg!(url), NoBody)
+            .req::<_, Vec<ChargerSession>>(http::Method::GET, &url, NoBody)
             .await
     }
 }

@@ -12,12 +12,12 @@ impl GetOngoingSession {
         }
     }
 
-    pub async fn send(&self, client: &Client) -> Result<Option<ChargerSession>> {
+    pub async fn send(&self, client: &Client) -> Result<ChargerSession> {
         let charger_id = &self.charger_id;
         let url = format!("api/chargers/{charger_id}/sessions/ongoing");
 
         client
-            .req::<_, Option<ChargerSession>>(http::Method::GET, &dbg!(url), NoBody)
+            .req::<_, ChargerSession>(http::Method::GET, &url, NoBody)
             .await
     }
 }

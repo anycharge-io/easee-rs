@@ -12,23 +12,22 @@ pub enum Error {
     #[error("Http: {0}")]
     Http(#[from] reqwest::Error),
 
-    #[error("Credentials expired")]
-    CredentialsExpired,
-
     #[error("not found")]
     NotFound,
 
-    #[error("Request failed with status: {0:03}")]
-    Failed(u16),
+    #[error("status:{http_status:03} code:{code:03}({code_name}): {title}")]
+    Api {
+        code: u32,
+        code_name: String,
+        title: String,
+        http_status: u16,
+    },
 
     #[error("Error deserializing reply: {err}. Body: {body}")]
     Deserializing {
         err: serde_json::Error,
         body: String,
     },
-
-    #[error("failed to refresh session: {0}")]
-    RefreshSessionFailed(Box<Self>),
 
     #[error("invalid access token: {0}")]
     AccessTokenParse(#[from] client::auth::ParseError),

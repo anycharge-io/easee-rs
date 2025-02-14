@@ -196,8 +196,19 @@ where
     if !status.is_success() {
         let err = match status {
             http::StatusCode::NOT_FOUND => Error::NotFound,
-            http::StatusCode::UNAUTHORIZED => Error::CredentialsExpired,
-            status => Error::Failed(status.as_u16()),
+
+            status => {
+                let body = res.text().await?;
+                let details = serde_json::from_str::<ApiError>(&body)
+                    .map_err(|err| Error::Deserializing { err, body })?;
+
+                Error::Api {
+                    code: details.error_code,
+                    code_name: details.error_code_name,
+                    title: details.title,
+                    http_status: status.as_u16(),
+                }
+            }
         };
 
         return Err(err);
@@ -228,4 +239,12 @@ struct LoginRequest<'a> {
     pub username: &'a str,
     #[serde(rename = "password")]
     pub password: &'a str,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ApiError {
+    pub error_code: u32,
+    pub error_code_name: String,
+    pub title: String,
 }

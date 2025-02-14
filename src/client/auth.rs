@@ -31,12 +31,6 @@ pub struct Session {
     pub role: Vec<UserRole>,
 }
 
-impl Session {
-    pub fn is_expired(&self) -> bool {
-        dbg!(self.expires_at.0 < DateTime::now_utc().0)
-    }
-}
-
 #[derive(Debug, serde::Deserialize)]
 struct JsonAccessToken {
     #[serde(rename = "AccountId")]
