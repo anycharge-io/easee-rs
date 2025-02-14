@@ -1,10 +1,17 @@
 pub mod auth;
+mod body;
+mod credentials;
 
-use std::{borrow::Cow, sync::Arc};
+pub(crate) use body::*;
+
+use credentials::GetJwt;
+use http::Method;
+
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::{requests, Error, Result};
-pub use auth::Session;
+use crate::{models, Error, Result};
+pub use {auth::Session, credentials::Credentials};
 
 //use leaky_bucket_lite::LeakyBucket;
 
@@ -20,156 +27,152 @@ pub enum FromEnvError {
     InvalidAccessToken(#[from] auth::ParseError),
 }
 
-pub struct StateAuthenticated {
-    session: auth::Session,
-    refresh_token: RefreshToken,
-}
-
-pub struct StateUnauthenticated;
-
 #[derive(Clone)]
-pub struct AccessToken(pub String);
-
-#[derive(Clone, Debug)]
-pub struct RefreshToken(pub String);
-
-#[derive(Clone)]
-pub struct Client<T>
-where
-    T: Send + Sync + 'static,
-{
+pub struct Client {
     c: reqwest::Client,
-    base_url: Cow<'static, str>,
-    auth_state: Arc<Mutex<T>>,
+    credentials: Arc<Mutex<Credentials>>,
 }
 
-impl Client<StateAuthenticated> {
-    pub fn authenticated(
-        access_token: &str,
-        refresh_token: RefreshToken,
-    ) -> std::result::Result<Client<StateAuthenticated>, auth::ParseError> {
-        let session = access_token.parse()?;
+fn build_http_client() -> reqwest::Client {
+    reqwest::ClientBuilder::new()
+        .user_agent("easee-rs")
+        .build()
+        .unwrap()
+}
+
+impl Client {
+    pub fn new(
+        access_token: impl AsRef<str>,
+        refresh_token: impl Into<String>,
+    ) -> std::result::Result<Self, auth::ParseError> {
+        let session = access_token.as_ref().parse()?;
+
+        let credentials = Credentials {
+            session,
+            refresh_token: refresh_token.into(),
+        };
 
         Ok(Client {
-            c: reqwest::ClientBuilder::new()
-                .user_agent("easee-rs")
-                .build()
-                .unwrap(), // Unwrap OK due to Infallible
-            base_url: Cow::Borrowed(BASE_URL),
-            auth_state: Arc::new(Mutex::new(StateAuthenticated {
-                session,
-                refresh_token,
-            })),
+            c: build_http_client(),
+            credentials: Arc::new(Mutex::new(credentials)),
         })
     }
 
-    pub fn from_env() -> std::result::Result<Client<StateAuthenticated>, FromEnvError> {
+    pub fn from_env() -> std::result::Result<Self, FromEnvError> {
         let access_token = std::env::var("EASEE_ACCESS_TOKEN")
             .map_err(|_| FromEnvError::Missing("EASEE_ACCESS_TOKEN"))?;
         let refresh_token = std::env::var("EASEE_REFRESH_TOKEN")
             .map_err(|_| FromEnvError::Missing("EASEE_REFRESH_TOKEN"))?;
 
-        Self::authenticated(&access_token, RefreshToken(refresh_token))
-            .map_err(FromEnvError::InvalidAccessToken)
+        Self::new(&access_token, refresh_token).map_err(FromEnvError::InvalidAccessToken)
     }
 
-    /// Attempts to refresh the active session. Applies and returns the newly fetched tokens.
-    pub async fn refresh_auth(&mut self) -> Result<(auth::Session, RefreshToken)> {
-        // Important to release lock before sending refresh.
-        let (session, refresh_token) = {
-            let state = self.auth_state.lock().await;
-            (state.session.clone(), state.refresh_token.clone())
+    pub async fn login(username: impl AsRef<str>, password: impl AsRef<str>) -> Result<Self> {
+        let c = build_http_client();
+
+        let builder = JsonBody(&LoginRequest {
+            username: username.as_ref(),
+            password: password.as_ref(),
+        })
+        .apply_to(c.post(format!("{BASE_URL}/api/accounts/login",)));
+
+        let res = send_and_handle_response::<models::RawSession>(builder).await?;
+
+        let credentials = Credentials {
+            session: res.access_token.parse::<Session>()?,
+            refresh_token: res.refresh_token,
         };
 
-        let (new_session, new_refresh) =
-            requests::RefreshSessionToken::new(session.raw.clone(), refresh_token.clone())
-                .send(self)
-                .await?;
-
-        {
-            let mut state = self.auth_state.lock().await;
-            state.refresh_token = new_refresh.clone();
-            state.session = new_session.clone();
-        }
-
-        Ok((new_session, new_refresh))
+        Ok(Self {
+            c,
+            credentials: Arc::new(Mutex::new(credentials)),
+        })
     }
 
-    pub async fn get_auth_session(&self) -> (auth::Session, RefreshToken) {
-        let state = self.auth_state.lock().await;
-        (state.session.clone(), state.refresh_token.clone())
+    async fn get_token(&self) -> Result<String> {
+        let mut credentials = self.credentials.lock().await;
+
+        let (token, refresh_token) = match credentials.get_valid_session().await {
+            GetJwt::Valid { token } => return Ok(token.into()),
+            GetJwt::Expired {
+                token,
+                refresh_token,
+            } => (token, refresh_token),
+        };
+
+        let res = self
+            .inner_req::<_, models::RawSession>(
+                Method::POST,
+                "/api/accounts/refresh_token",
+                token,
+                JsonBody(&RefreshSessionTokenRequest {
+                    access_token: token,
+                    refresh_token,
+                }),
+            )
+            .await?;
+
+        credentials.session = res.access_token.parse::<Session>()?;
+        credentials.refresh_token = res.refresh_token;
+
+        Ok(res.access_token)
     }
 
-    pub(crate) async fn req<B, R>(&self, method: http::Method, path: &str, body: B) -> Result<R>
+    /// Forces refresh of the current session
+    pub async fn refresh_session(&self) -> Result<()> {
+        let mut credentials = self.credentials.lock().await;
+        let (token, refresh_token) = credentials.get_tokens();
+
+        let res = self
+            .inner_req::<_, models::RawSession>(
+                Method::POST,
+                "/api/accounts/refresh_token",
+                &token,
+                JsonBody(&RefreshSessionTokenRequest {
+                    access_token: &token,
+                    refresh_token: &refresh_token,
+                }),
+            )
+            .await?;
+
+        credentials.session = res.access_token.parse::<Session>()?;
+        credentials.refresh_token = res.refresh_token;
+
+        Ok(())
+    }
+
+    /// Returns a copy of the current Credentials
+    pub async fn get_credentials(&self) -> Credentials {
+        let lock = self.credentials.lock().await;
+
+        Credentials::clone(&lock)
+    }
+
+    pub async fn get_credentials_issued_at(&self) -> models::DateTime {
+        let lock = self.credentials.lock().await;
+        lock.session.issued_at
+    }
+
+    async fn inner_req<B, R>(
+        &self,
+        method: http::Method,
+        path: &str,
+        access_token: &str,
+        body: B,
+    ) -> Result<R>
     where
         B: Body,
         R: serde::de::DeserializeOwned,
     {
-        let state = self.auth_state.lock().await;
-        let access_token = &state.session.raw;
-
         let b = self
             .c
             .request(
                 method,
-                format!("{}/{}", &self.base_url, path.trim_start_matches('/')),
+                format!("{}/{}", BASE_URL, path.trim_start_matches('/')),
             )
             .header("authorization", format!("Bearer {access_token}"));
 
-        let res = body.apply_to(b).send().await?;
-
-        let status = res.status();
-
-        if !status.is_success() {
-            let err = match status {
-                http::StatusCode::NOT_FOUND => Error::NotFound,
-                http::StatusCode::UNAUTHORIZED => Error::CredentialsExpired,
-                status => Error::Failed(status.as_u16()),
-            };
-
-            return Err(err);
-        }
-
-        let text_body = res.text().await?;
-
-        match serde_json::from_str::<R>(&text_body) {
-            Ok(res) => Ok(res),
-
-            Err(err) => Err(Error::Deserializing {
-                err,
-                body: text_body,
-            }),
-        }
-    }
-}
-
-impl Client<StateUnauthenticated> {
-    pub fn unauthenticated() -> Client<StateUnauthenticated> {
-        Client {
-            c: reqwest::ClientBuilder::new()
-                .user_agent("easee-rs")
-                .build()
-                .unwrap(), // Unwrap OK due to Infallible
-            base_url: Cow::Borrowed(BASE_URL),
-            auth_state: Arc::new(Mutex::new(StateUnauthenticated)),
-        }
-    }
-
-    pub async fn login(
-        &self,
-        username: impl Into<String>,
-        password: impl Into<String>,
-    ) -> Result<Client<StateAuthenticated>> {
-        let (session, refresh_token) = requests::Login::new(username, password).send(self).await?;
-
-        Ok(Client {
-            c: self.c.clone(),
-            base_url: self.base_url.clone(),
-            auth_state: Arc::new(Mutex::new(StateAuthenticated {
-                session,
-                refresh_token,
-            })),
-        })
+        send_and_handle_response(body.apply_to(b)).await
     }
 
     pub(crate) async fn req<B, R>(&self, method: http::Method, path: &str, body: B) -> Result<R>
@@ -177,55 +180,52 @@ impl Client<StateUnauthenticated> {
         B: Body,
         R: serde::de::DeserializeOwned,
     {
-        let b = self.c.request(
-            method,
-            format!("{}/{}", &self.base_url, path.trim_start_matches('/')),
-        );
-
-        let res = body.apply_to(b).send().await?;
-
-        let status = res.status();
-
-        if !status.is_success() {
-            let err = match status {
-                http::StatusCode::NOT_FOUND => Error::NotFound,
-                status => Error::Failed(status.as_u16()),
-            };
-
-            return Err(err);
-        }
-
-        let text_body = res.text().await?;
-
-        match serde_json::from_str::<R>(&text_body) {
-            Ok(res) => Ok(res),
-
-            Err(err) => Err(Error::Deserializing {
-                err,
-                body: text_body,
-            }),
-        }
+        let access_token = self.get_token().await?;
+        self.inner_req(method, path, &access_token, body).await
     }
 }
 
-pub(crate) struct JsonBody<'a, T>(pub &'a T);
-pub(crate) struct NoBody;
-
-pub(crate) trait Body {
-    fn apply_to(self, builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder;
-}
-
-impl<'a, T> Body for JsonBody<'a, T>
+async fn send_and_handle_response<R>(builder: reqwest::RequestBuilder) -> Result<R>
 where
-    T: serde::Serialize,
+    R: serde::de::DeserializeOwned,
 {
-    fn apply_to(self, builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
-        builder.json(self.0)
+    let res = builder.send().await?;
+
+    let status = res.status();
+
+    if !status.is_success() {
+        let err = match status {
+            http::StatusCode::NOT_FOUND => Error::NotFound,
+            http::StatusCode::UNAUTHORIZED => Error::CredentialsExpired,
+            status => Error::Failed(status.as_u16()),
+        };
+
+        return Err(err);
+    }
+
+    let text_body = res.text().await?;
+
+    match serde_json::from_str::<R>(&text_body) {
+        Ok(res) => Ok(res),
+
+        Err(err) => Err(Error::Deserializing {
+            err,
+            body: text_body,
+        }),
     }
 }
 
-impl Body for NoBody {
-    fn apply_to(self, builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
-        builder
-    }
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RefreshSessionTokenRequest<'a> {
+    access_token: &'a str,
+    refresh_token: &'a str,
+}
+
+#[derive(serde::Serialize)]
+struct LoginRequest<'a> {
+    #[serde(rename = "userName")]
+    pub username: &'a str,
+    #[serde(rename = "password")]
+    pub password: &'a str,
 }

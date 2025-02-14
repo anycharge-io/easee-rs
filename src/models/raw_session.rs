@@ -1,6 +1,8 @@
+/// The raw response received from Login and RefreshToken
+#[allow(dead_code)]
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct NewSession {
+pub(crate) struct RawSession {
     pub access_token: String,
     pub expires_in: u64,
     pub token_type: String,

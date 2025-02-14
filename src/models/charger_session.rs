@@ -25,6 +25,9 @@ pub struct ChargerSession {
 
     pub first_energy_transfer_period_started: Option<DateTime>,
     pub last_energy_transfer_period_end: Option<DateTime>,
+
+    #[serde(alias = "authToken")]
+    pub auth_token: Option<String>,
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-use crate::{ChargerSession, Client, NoBody, Result, StateAuthenticated};
+use crate::{ChargerSession, Client, NoBody, Result};
 
 pub struct GetChargerSessions {
     charger_id: String,
@@ -21,7 +21,7 @@ impl GetChargerSessions {
         }
     }
 
-    pub async fn send(&self, client: &Client<StateAuthenticated>) -> Result<Vec<ChargerSession>> {
+    pub async fn send(&self, client: &Client) -> Result<Vec<ChargerSession>> {
         let df = time::macros::format_description!("[year]-[month]-[day]");
 
         let charger_id = &self.charger_id;

@@ -71,7 +71,7 @@ where
     _marker: PhantomData<T>,
 }
 
-impl<'de, T> Visitor<'de> for FromStrVisitor<T>
+impl<T> Visitor<'_> for FromStrVisitor<T>
 where
     T: FromStr,
     <T as FromStr>::Err: fmt::Display,

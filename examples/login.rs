@@ -13,13 +13,12 @@ pub async fn main() -> Result<()> {
         .nth(2)
         .ok_or_else(|| anyhow!("first argument must be password"))?;
 
-    let client = Client::unauthenticated();
+    let client = Client::login(username, password).await?;
 
-    let client = client.login(username, password).await?;
+    let profile = easeeapi::requests::GetProfile.send(&client).await?;
+    let credentials = client.get_credentials().await;
 
-    let (session, refresh_token) = client.get_auth_session().await;
-
-    println!("{session:#?}");
-    println!("{refresh_token:#?}");
+    println!("{credentials:#?}");
+    println!("current profile:\n{profile:#?}");
     Ok(())
 }

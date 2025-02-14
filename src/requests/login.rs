@@ -31,7 +31,7 @@ impl Login {
         client: &Client<StateUnauthenticated>,
     ) -> Result<(auth::Session, RefreshToken)> {
         let res = client
-            .req::<_, NewSession>(http::Method::POST, "/api/accounts/login", JsonBody(self))
+            .req::<_, NewSession>(http::Method::POST, , JsonBody(self))
             .await?;
         let session = res.access_token.parse::<auth::Session>()?;
 

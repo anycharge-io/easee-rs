@@ -1,4 +1,4 @@
-use crate::{ChargerSession, Client, NoBody, Result, StateAuthenticated};
+use crate::{ChargerSession, Client, NoBody, Result};
 
 pub struct GetOngoingSession {
     charger_id: String,
@@ -12,10 +12,7 @@ impl GetOngoingSession {
         }
     }
 
-    pub async fn send(
-        &self,
-        client: &Client<StateAuthenticated>,
-    ) -> Result<Option<ChargerSession>> {
+    pub async fn send(&self, client: &Client) -> Result<Option<ChargerSession>> {
         let charger_id = &self.charger_id;
         let url = format!("api/chargers/{charger_id}/sessions/ongoing");
 

@@ -95,7 +95,7 @@ impl<'de> serde::Deserialize<'de> for DateTime {
 }
 struct Visitor;
 
-impl<'de> serde::de::Visitor<'de> for Visitor {
+impl serde::de::Visitor<'_> for Visitor {
     type Value = DateTime;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
