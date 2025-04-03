@@ -10,7 +10,7 @@ use http::Method;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::{models, Error, Result};
+use crate::{Error, Result, models};
 pub use {auth::Session, credentials::Credentials};
 
 //use leaky_bucket_lite::LeakyBucket;

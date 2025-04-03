@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use easeeapi::{requests, Client};
+use easeeapi::{Client, requests};
 
 #[tokio::main]
 pub async fn main() -> Result<()> {

@@ -1,5 +1,5 @@
-use crate::{models, DateTime};
-use base64::{engine::general_purpose, Engine};
+use crate::{DateTime, models};
+use base64::{Engine, engine::general_purpose};
 use std::str::FromStr;
 
 #[derive(Debug, thiserror::Error)]

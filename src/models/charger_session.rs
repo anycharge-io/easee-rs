@@ -54,7 +54,7 @@ mod tests {
      "id": 4
    }"#;
 
-        serde_json::from_str::<ChargerSession>(&s).expect("deserializing");
+        serde_json::from_str::<ChargerSession>(s).expect("deserializing");
     }
 
     #[test]
@@ -90,7 +90,7 @@ mod tests {
 ]
 "#;
 
-        serde_json::from_str::<Vec<ChargerSession>>(&s).expect("deserializing");
+        serde_json::from_str::<Vec<ChargerSession>>(s).expect("deserializing");
     }
 
     #[test]

@@ -40,7 +40,7 @@ pub struct Site {
     pub created_on: DateTime,
 
     pub updated_on: DateTime,
-    pub user_role: u8, // 1, 2, 3, 20
+    pub user_role: Option<u8>, // 1, 2, 3, 20
     #[serde(default = "Vec::new")]
     pub allowed_site_actions: Vec<String>,
 }
@@ -111,7 +111,7 @@ pub struct Charger {
     pub back_plate: BackPlate,
     pub level_of_access: Option<u8>, // 1 - 3
     pub product_code: u32,           // 1, 100, 1000
-    pub user_role: u8,               // 1, 2, 3, 20
+    pub user_role: Option<u8>,       // 1, 2, 3, 20
     pub is_temporary: bool,
 }
 
@@ -148,4 +148,16 @@ pub struct Profile {
 
     #[serde(rename = "lastName")]
     pub lastname: String,
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn deserialize_site_example1() {
+        let json = r#"
+{"uuid":"48cd5363-6520-4869-8bf4-7774598a3f87","id":85096,"siteKey":"E6US-N222","name":"Brf Ryssjan 222","accessMode":2,"levelOfAccess":3,"address":{"street":"Blecktornsstigen","buildingNumber":null,"zip":"116 66","area":"Stockholm","country":{"id":"SE","name":"Sweden","phonePrefix":0},"latitude":null,"longitude":null,"altitude":null},"contactInfo":{"installerName":"Easycharging ","installerPhoneNumber":"020100053","ownerName":"EcoVision AB","ownerPhoneNumber":"+46703564597","company":null},"costModel":"fixedprice","costModelVariant":null,"costPerKWh":2.19,"costPerKwhExcludeVat":1.752,"currencyId":"SEK","siteType":100,"siteCategory":0,"ratedCurrent":0.0,"vat":25.0,"partnerId":7680,"installerId":4735,"installerUserId":null,"supportId":null,"installerAlias":null,"useDynamicMaster":false,"circuits":[{"id":84131,"uuid":"c40a9cb4-33ed-4b1e-871e-d9bb928d703b","siteId":85096,"circuitPanelId":4,"panelName":"4","ratedCurrent":20.0,"fuse":null,"chargers":[{"id":"EC32KXFN","name":"Höger EC32KXFN","color":null,"createdOn":"2021-02-24T11:02:21.282008","updatedOn":"2021-04-29T11:52:09.870076","backPlate":{"id":"816CA5D2ED1304","masterBackPlateId":"806CA5D264A104","name":"","backplateType":0,"features":[]},"levelOfAccess":null,"productCode":100,"userRole":null,"isTemporary":false},{"id":"ECS7ZRJY","name":"Vänster ECS7ZRJY","color":null,"createdOn":"2021-02-24T10:48:17.259166","updatedOn":"2021-04-29T11:52:09.873356","backPlate":{"id":"806CA5D264A104","masterBackPlateId":"806CA5D264A104","name":"","backplateType":0,"features":[]},"levelOfAccess":null,"productCode":100,"userRole":null,"isTemporary":false}],"masterBackplate":null,"useDynamicMaster":false,"parentCircuitId":null}],"equalizers":[],"createdOn":"2021-04-19T11:47:10.105092","updatedOn":"2025-02-13T08:41:10.861026","userRole":null,"allowedSiteActions":[],"support":null,"regulations":[]}
+"#;
+
+        serde_json::from_str::<super::Site>(json).expect("deserializing charger example 1");
+    }
 }
