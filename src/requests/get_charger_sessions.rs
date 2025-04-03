@@ -1,4 +1,4 @@
-use crate::{ChargerSession, Client, NoBody, Result};
+use crate::{ChargerSession, Client, JsonBody, NoBody, Result};
 
 pub struct GetChargerSessions {
     charger_id: String,
@@ -32,7 +32,7 @@ impl GetChargerSessions {
         let url = format!("api/sessions/charger/{charger_id}/sessions/{from_s}/{to_s}");
 
         client
-            .req::<_, Vec<ChargerSession>>(http::Method::GET, &url, NoBody)
+            .req::<_, JsonBody<Vec<ChargerSession>>>(http::Method::GET, &url, NoBody)
             .await
     }
 }

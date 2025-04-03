@@ -1,4 +1,4 @@
-use crate::{Client, NoBody, Result, SiteSub};
+use crate::{Client, JsonBody, NoBody, Result, SiteSub};
 
 #[derive(Default, Clone)]
 pub struct GetSites {
@@ -24,7 +24,9 @@ impl GetSites {
     }
 
     pub async fn send(&self, client: &Client) -> Result<Vec<SiteSub>> {
-        client.req(http::Method::GET, "api/sites", NoBody).await
+        client
+            .req::<_, JsonBody<Vec<SiteSub>>>(http::Method::GET, "api/sites", NoBody)
+            .await
     }
 }
 

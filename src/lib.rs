@@ -12,6 +12,9 @@ pub enum Error {
     #[error("Http: {0}")]
     Http(#[from] reqwest::Error),
 
+    #[error("Invalid UTF8 received")]
+    InvalidUtf8(String),
+
     #[error("not found")]
     NotFound,
 
@@ -23,8 +26,17 @@ pub enum Error {
         http_status: u16,
     },
 
+    #[error("Error deserializing Csv reply: {0}")]
+    DeserializingCsv(String),
+
     #[error("Error deserializing reply: {err}. Body: {body}")]
-    Deserializing {
+    DeserializingJson {
+        err: serde_json::Error,
+        body: String,
+    },
+
+    #[error("Error deserializing error reply: {err}. Body: {body}")]
+    DeserializingErrorReply {
         err: serde_json::Error,
         body: String,
     },

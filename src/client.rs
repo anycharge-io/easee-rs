@@ -76,7 +76,7 @@ impl Client {
         })
         .apply_to(c.post(format!("{BASE_URL}/api/accounts/login",)));
 
-        let res = send_and_handle_response::<models::RawSession>(builder).await?;
+        let res = send_and_handle_response::<JsonBody<models::RawSession>>(builder).await?;
 
         let credentials = Credentials {
             session: res.access_token.parse::<Session>()?,
@@ -101,7 +101,7 @@ impl Client {
         };
 
         let res = self
-            .inner_req::<_, models::RawSession>(
+            .inner_req::<_, JsonBody<models::RawSession>>(
                 Method::POST,
                 "/api/accounts/refresh_token",
                 token,
@@ -124,11 +124,11 @@ impl Client {
         let (token, refresh_token) = credentials.get_tokens();
 
         let res = self
-            .inner_req::<_, models::RawSession>(
+            .inner_req::<_, JsonBody<models::RawSession>>(
                 Method::POST,
                 "/api/accounts/refresh_token",
                 &token,
-                JsonBody(&RefreshSessionTokenRequest {
+                JsonBody(RefreshSessionTokenRequest {
                     access_token: &token,
                     refresh_token: &refresh_token,
                 }),
@@ -153,16 +153,16 @@ impl Client {
         lock.session.issued_at
     }
 
-    async fn inner_req<B, R>(
+    async fn inner_req<Req, Rep>(
         &self,
         method: http::Method,
         path: &str,
         access_token: &str,
-        body: B,
-    ) -> Result<R>
+        body: Req,
+    ) -> Result<Rep::Data>
     where
-        B: Body,
-        R: serde::de::DeserializeOwned,
+        Req: RequestBody,
+        Rep: ResponseBody,
     {
         let b = self
             .c
@@ -172,22 +172,28 @@ impl Client {
             )
             .header("authorization", format!("Bearer {access_token}"));
 
-        send_and_handle_response(body.apply_to(b)).await
+        send_and_handle_response::<Rep>(body.apply_to(b)).await
     }
 
-    pub(crate) async fn req<B, R>(&self, method: http::Method, path: &str, body: B) -> Result<R>
+    pub(crate) async fn req<Req, Rep>(
+        &self,
+        method: http::Method,
+        path: &str,
+        body: Req,
+    ) -> Result<Rep::Data>
     where
-        B: Body,
-        R: serde::de::DeserializeOwned,
+        Req: RequestBody,
+        Rep: ResponseBody,
     {
         let access_token = self.get_token().await?;
-        self.inner_req(method, path, &access_token, body).await
+        self.inner_req::<Req, Rep>(method, path, &access_token, body)
+            .await
     }
 }
 
-async fn send_and_handle_response<R>(builder: reqwest::RequestBuilder) -> Result<R>
+async fn send_and_handle_response<Rep>(builder: reqwest::RequestBuilder) -> Result<Rep::Data>
 where
-    R: serde::de::DeserializeOwned,
+    Rep: ResponseBody,
 {
     let res = builder.send().await?;
 
@@ -200,7 +206,7 @@ where
             status => {
                 let body = res.text().await?;
                 let details = serde_json::from_str::<ApiError>(&body)
-                    .map_err(|err| Error::Deserializing { err, body })?;
+                    .map_err(|err| Error::DeserializingErrorReply { err, body })?;
 
                 Error::Api {
                     code: details.error_code,
@@ -214,16 +220,9 @@ where
         return Err(err);
     }
 
-    let text_body = res.text().await?;
+    let body = res.bytes().await?;
 
-    match serde_json::from_str::<R>(&text_body) {
-        Ok(res) => Ok(res),
-
-        Err(err) => Err(Error::Deserializing {
-            err,
-            body: text_body,
-        }),
-    }
+    Rep::from_body(body)
 }
 
 #[derive(serde::Serialize)]

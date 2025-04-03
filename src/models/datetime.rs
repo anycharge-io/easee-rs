@@ -4,6 +4,9 @@ pub static FORMAT: &[time::format_description::FormatItem<'static>] = time::macr
     "[year]-[month]-[day]T[hour]:[minute]:[second][optional [.[subsecond]]]"
 );
 
+pub static FORMAT_CSV: &[time::format_description::FormatItem<'static>] =
+    time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]");
+
 pub static FORMAT_Z: &[time::format_description::FormatItem<'static>] =
     time::macros::format_description!("[year]-[month]-[day]T[hour]:[minute]:[second]Z");
 
@@ -43,6 +46,10 @@ impl str::FromStr for DateTime {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // So, easy uses multiple different formats. Just to have a laugh.
+        //
+        // In csv the format is
+        // 2025-03-08 10:31
+        //
         // if it contains a +, it's:
         // 2023-01-20T19:31:50+00:00
         //
@@ -52,7 +59,12 @@ impl str::FromStr for DateTime {
         // otherwise it might be
         // 2021-11-01T12:00:18.044574
 
-        if s.contains('+') {
+        // CSV Date
+        if s.len() == 16 {
+            let dt = time::PrimitiveDateTime::parse(s, FORMAT_CSV)
+                .map_err(|err| format!("parsing `{s}` as offset datetime: {err}"))?;
+            Ok(Self(dt.assume_utc()))
+        } else if s.contains('+') {
             time::OffsetDateTime::parse(s, FORMAT_WITH_OFFSET)
                 .map_err(|err| format!("parsing `{s}` as offset datetime: {err}"))
                 .map(Self)
@@ -167,5 +179,12 @@ mod tests {
     #[test]
     fn epoch_to_datetime() {
         DateTime::from_unix_timestamp(1682208130).expect("from unix");
+    }
+
+    #[test]
+    fn parse_csv_time() {
+        "2025-03-03 15:52"
+            .parse::<DateTime>()
+            .expect("parsing csv time");
     }
 }

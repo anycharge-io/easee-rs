@@ -1,4 +1,4 @@
-use crate::{ChargerSession, Client, NoBody, Result};
+use crate::{ChargerSession, Client, JsonBody, NoBody, Result};
 
 pub struct GetOngoingSession {
     charger_id: String,
@@ -17,7 +17,7 @@ impl GetOngoingSession {
         let url = format!("api/chargers/{charger_id}/sessions/ongoing");
 
         client
-            .req::<_, ChargerSession>(http::Method::GET, &url, NoBody)
+            .req::<_, JsonBody<ChargerSession>>(http::Method::GET, &url, NoBody)
             .await
     }
 }
